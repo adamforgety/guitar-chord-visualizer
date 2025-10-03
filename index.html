@@ -18,7 +18,7 @@
         /* Responsive SVG container for mobile */
         #fretboardContainer {
             width: 100%;
-            max-width: 340px;
+            max-width: 600px; /* was 340px */
         }
         @media (max-width: 480px) {
             #fretboardContainer {
@@ -26,7 +26,7 @@
                 padding: 0.5rem !important;
             }
             #fretboardSvg {
-                height: 180px !important;
+                height: 300px !important; /* was 180px */
             }
         }
         @media (max-width: 640px) {
@@ -75,7 +75,7 @@
             <h2 id="resultName" class="text-xl font-semibold text-gray-800 mb-3 text-center h-6"></h2>
             <p id="messageArea" class="text-red-500 mb-4 h-6 text-center"></p>
             <div id="fretboardContainer" class="relative w-full max-w-md p-2 bg-gray-100 rounded-lg key-shadow">
-                <svg id="fretboardSvg" width="100%" height="230" preserveAspectRatio="xMidYMid meet"></svg>
+                <svg id="fretboardSvg" width="100%" height="360" preserveAspectRatio="xMidYMid meet"></svg>
             </div>
             <div id="infoArea" class="mt-4 p-4 w-full max-w-lg bg-white rounded-xl shadow border border-gray-200">
                 <div id="intervalLegend" class="text-sm text-gray-700">
@@ -170,15 +170,15 @@
         ];
 
         // --- Fretboard & SVG Configuration ---
-        // Make these smaller for mobile!
+        // Make these larger for desktop!
         const SVG_CONFIG = {
             TOTAL_FRETS: 5,
             TOTAL_STRINGS: 6,
-            FRET_HEIGHT: window.innerWidth <= 480 ? 28 : 38,        // Was 50, now 28 for mobile, 38 for desktop/tablet
-            STRING_SPACING: window.innerWidth <= 480 ? 30 : 38,     // Was 55, now 30 for mobile, 38 for desktop/tablet
-            CHART_START_Y: window.innerWidth <= 480 ? 24 : 32,      // Was 40, now 24 for mobile, 32 for desktop/tablet
-            NUT_THICKNESS: 6,       // Slightly thinner nut
-            FINGER_RADIUS: window.innerWidth <= 480 ? 9 : 13,       // Was 15, now 9 for mobile, 13 for desktop/tablet
+            FRET_HEIGHT: window.innerWidth <= 480 ? 40 : 60,        // was 28/38, now 40/60
+            STRING_SPACING: window.innerWidth <= 480 ? 40 : 60,     // was 30/38, now 40/60
+            CHART_START_Y: window.innerWidth <= 480 ? 36 : 50,      // was 24/32, now 36/50
+            NUT_THICKNESS: 8,       // Slightly thicker nut
+            FINGER_RADIUS: window.innerWidth <= 480 ? 13 : 20,       // was 9/13, now 13/20
             COLOR_ROOT: '#ef4444',
             COLOR_THIRD: '#facc15',
             COLOR_FIFTH: '#10b981',
@@ -535,10 +535,10 @@
             positionSelector.addEventListener('change', updateVisualization); 
             window.addEventListener('resize', () => {
                 // Re-calculate SVG_CONFIG for mobile/desktop on resize
-                SVG_CONFIG.FRET_HEIGHT = window.innerWidth <= 480 ? 28 : 38;
-                SVG_CONFIG.STRING_SPACING = window.innerWidth <= 480 ? 30 : 38;
-                SVG_CONFIG.CHART_START_Y = window.innerWidth <= 480 ? 24 : 32;
-                SVG_CONFIG.FINGER_RADIUS = window.innerWidth <= 480 ? 9 : 13;
+                SVG_CONFIG.FRET_HEIGHT = window.innerWidth <= 480 ? 40 : 60;
+                SVG_CONFIG.STRING_SPACING = window.innerWidth <= 480 ? 40 : 60;
+                SVG_CONFIG.CHART_START_Y = window.innerWidth <= 480 ? 36 : 50;
+                SVG_CONFIG.FINGER_RADIUS = window.innerWidth <= 480 ? 13 : 20;
                 updateVisualization();
             });
             rootNoteSelect.innerHTML = NOTE_INFO.map(note => 
