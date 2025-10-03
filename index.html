@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -12,6 +12,7 @@
             font-family: 'Inter', sans-serif;
             background-color: #f7f9fb;
         }
+        /* Applied to main containers for depth */
         .key-shadow {
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 2px, 4px, 0.06);
         }
@@ -19,9 +20,13 @@
         body {
             height: 100vh;
         }
-        /* Highlight for the active mode button */
+        /* Highlight for the active mode button (The "Pressed Key" Look) */
         .mode-active {
-            @apply bg-blue-600 text-white shadow-lg;
+            /* Sets the active color */
+            @apply bg-blue-600 text-white;
+            /* Simulates the button being pressed down */
+            @apply shadow-inner border-b-2 border-r-2 border-blue-800 translate-y-px;
+            transform: translateY(2px) !important; /* Ensure the press effect applies */
         }
     </style>
 </head>
@@ -37,10 +42,14 @@
             </p>
         </header>
         
-        <!-- Mode Switch -->
-        <div class="flex justify-center mb-6 max-w-sm mx-auto p-1 bg-gray-100 rounded-lg key-shadow">
-            <button id="modeChord" data-mode="chord" class="flex-1 py-2 text-sm font-semibold rounded-lg transition mode-active">Chord Mode</button>
-            <button id="modeScale" data-mode="scale" class="flex-1 py-2 text-sm font-semibold rounded-lg transition text-gray-700 hover:bg-gray-200">Scale Mode</button>
+        <!-- Mode Switch - Now uses a key-like design -->
+        <div class="flex justify-center mb-6 max-w-sm mx-auto p-1 bg-transparent rounded-xl gap-2">
+            <!-- Base key style: unpressed white key -->
+            <button id="modeChord" data-mode="chord" class="flex-1 py-3 text-base font-bold rounded-xl transition transform duration-100 ease-out 
+                bg-white text-gray-800 border-b-4 border-r-2 border-gray-400 shadow-md hover:bg-gray-100">Chord Mode</button>
+            
+            <button id="modeScale" data-mode="scale" class="flex-1 py-3 text-base font-bold rounded-xl transition transform duration-100 ease-out 
+                bg-white text-gray-800 border-b-4 border-r-2 border-gray-400 shadow-md hover:bg-gray-100">Scale Mode</button>
         </div>
 
         <!-- Selection Controls: 3 Dropdowns for maximum flexibility -->
@@ -269,14 +278,13 @@
         function updateMode(newMode) {
             currentMode = newMode;
 
-            // Update button styling
+            // Update button styling: Active mode gets the 'mode-active' class (blue/pressed look). 
+            // Inactive mode just has the base button classes (white/unpressed look).
             modeChordButton.classList.toggle('mode-active', currentMode === 'chord');
             modeScaleButton.classList.toggle('mode-active', currentMode === 'scale');
-            modeChordButton.classList.toggle('text-gray-700', currentMode === 'scale');
-            modeScaleButton.classList.toggle('text-gray-700', currentMode === 'chord');
-            modeChordButton.classList.toggle('hover:bg-gray-200', currentMode === 'scale');
-            modeScaleButton.classList.toggle('hover:bg-gray-200', currentMode === 'chord');
             
+            // The redundant class toggling from the previous version is removed as the new base classes handle the inactive look.
+
             // Populate dropdowns based on mode
             populateTypeAndPositionSelectors();
             
