@@ -13,7 +13,7 @@
             background-color: #f7f9fb;
         }
         .key-shadow {
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 2px, 4px, 0.06);
         }
         /* Ensure the body takes up full height for mobile responsiveness */
         body {
@@ -83,14 +83,19 @@
                 <svg id="fretboardSvg" width="100%" height="300" preserveAspectRatio="xMidYMid meet"></svg>
             </div>
 
-            <!-- Legend for Scale Mode -->
-            <div id="legend" class="mt-4 p-3 bg-white rounded-xl shadow hidden text-sm text-gray-700 border border-gray-200">
-                <h3 class="font-bold mb-2 text-center text-gray-800">Scale Note Intervals</h3>
-                <div class="flex flex-wrap justify-center gap-x-4 gap-y-2">
-                    <span class="flex items-center"><span class="w-3 h-3 rounded-full mr-1 bg-red-500"></span> Root (R)</span>
-                    <span class="flex items-center"><span class="w-3 h-3 rounded-full mr-1 bg-yellow-400"></span> Third (3)</span>
-                    <span class="flex items-center"><span class="w-3 h-3 rounded-full mr-1 bg-green-500"></span> Fifth (5)</span>
-                    <span class="flex items-center"><span class="w-3 h-3 rounded-full mr-1 bg-blue-500"></span> Other Notes</span>
+            <!-- Legend for BOTH Chord and Scale Mode -->
+            <div id="infoArea" class="mt-4 p-4 w-full max-w-lg bg-white rounded-xl shadow border border-gray-200">
+                <div id="intervalLegend" class="text-sm text-gray-700">
+                    <h3 class="font-bold mb-2 text-center text-gray-800">Note Function Legend</h3>
+                    <div class="flex flex-wrap justify-center gap-x-4 gap-y-2">
+                        <span class="flex items-center"><span class="w-3 h-3 rounded-full mr-1 bg-red-500"></span> Root (R)</span>
+                        <span class="flex items-center"><span class="w-3 h-3 rounded-full mr-1 bg-yellow-400"></span> Third (3 / m3)</span>
+                        <span class="flex items-center"><span class="w-3 h-3 rounded-full mr-1 bg-green-500"></span> Fifth (5)</span>
+                        <span class="flex items-center"><span class="w-3 h-3 rounded-full mr-1 bg-blue-500"></span> Other Chord/Scale Notes</span>
+                    </div>
+                    <p class="text-xs text-center mt-3 text-gray-500">
+                        *Circles display the **Note Name** for direct learning.*
+                    </p>
                 </div>
             </div>
             
@@ -109,7 +114,7 @@
         // Standard guitar tuning in semitone indices (E A D G B E)
         const STRING_TUNING = [4, 9, 2, 7, 11, 4]; // Low E (6th, Index 0) to High E (1st, Index 5)
         
-        // --- CHORD DATA (Truncated for space, full data remains the same) ---
+        // --- CHORD DATA ---
         const CHORD_DEFINITIONS = {
             'major': { name: 'Major', intervals: [0, 4, 7] },
             'minor': { name: 'Minor', intervals: [0, 3, 7] },
@@ -128,7 +133,6 @@
             '9_minor': { finger: ['X', 0, 2, 2, 1, 0], rootString: 1, name: 'A minor' }, 
             '2_minor': { finger: ['X', 'X', 0, 2, 3, 1], rootString: 3, name: 'D minor' },
             '4_minor': { finger: [0, 2, 2, 0, 0, 0], rootString: 0, name: 'E minor' },
-            // ... (other open chords)
         };
         const SHAPES = {
             'open_position': { name: "Open Position" }, 
@@ -161,15 +165,13 @@
         };
         const SHAPE_ORDER = ['open_position', 'e_shape', 'a_shape'];
 
-        // --- SCALE DATA (ACCURATE INTERVALS) ---
+        // --- SCALE DATA ---
         const SCALE_DEFINITIONS = {
-            // Intervals are half steps from the root (0)
             'major': { name: 'Major (Ionian)', intervals: [0, 2, 4, 5, 7, 9, 11] },
             'minor': { name: 'Natural Minor (Aeolian)', intervals: [0, 2, 3, 5, 7, 8, 10] },
             'pentatonic_min': { name: 'Minor Pentatonic', intervals: [0, 3, 5, 7, 10] },
         };
 
-        // Scale positions simply define the starting fret of the 5-fret window
         const SCALE_POSITIONS = [
             { key: 'p1', name: 'Position 1 (Starts Fret 1)', startFret: 1 },
             { key: 'p3', name: 'Position 3 (Starts Fret 3)', startFret: 3 },
@@ -193,6 +195,13 @@
             COLOR_FIFTH: '#10b981',    // Green-500
             COLOR_OTHER: '#3b82f6',    // Blue-500
         };
+        
+        // Interval Label Mapping (kept for internal logic/coloring only)
+        const INTERVAL_LABELS = {
+            0: 'R', 1: 'b2', 2: '2', 3: 'm3', 4: 'M3', 5: '4', 6: 'b5', 
+            7: '5', 8: 'b6', 9: '6', 10: 'm7', 11: 'M7'
+        };
+
 
         // --- DOM Elements & State ---
         const modeChordButton = document.getElementById('modeChord');
@@ -205,7 +214,8 @@
         const resultNameH2 = document.getElementById('resultName');
         const messageAreaP = document.getElementById('messageArea');
         const fretboardSvg = document.getElementById('fretboardSvg');
-        const legendDiv = document.getElementById('legend');
+        // The info area is always visible and contains the legend
+        const intervalLegendDiv = document.getElementById('intervalLegend');
 
         let currentMode = 'chord'; 
 
@@ -213,12 +223,9 @@
 
         /**
          * Calculates the note name (string) from the open string index and fret number.
-         * @param {number} stringIndex - 0 (Low E) to 5 (High E)
-         * @param {number} fret - Absolute fret number (0 to 12+)
-         * @returns {string} The note name (e.g., "C#")
          */
         function getNoteName(stringIndex, fret) {
-            if (fret === 'X' || fret === 0) return '';
+            if (fret === 'X') return '';
             const stringTuningNote = STRING_TUNING[stringIndex];
             const noteIndex = (stringTuningNote + fret) % 12;
             return NOTE_INFO[noteIndex].name;
@@ -226,18 +233,15 @@
 
         /**
          * Calculates the interval (in half steps) of a note relative to the root.
-         * @param {number} rootIndex - The root note ID (0-11)
-         * @param {number} noteIndex - The note ID (0-11)
-         * @returns {number} The interval in half steps (0-11)
          */
         function getInterval(rootIndex, noteIndex) {
             return (noteIndex - rootIndex + 12) % 12;
         }
 
         /**
-         * Determines the color for a scale note based on its interval.
+         * Determines the color for a note based on its interval relative to the root.
          */
-        function getScaleNoteColor(interval) {
+        function getNoteColor(interval) {
             switch (interval) {
                 case 0: return SVG_CONFIG.COLOR_ROOT;
                 case 3: // Minor 3rd
@@ -248,6 +252,15 @@
                 default:
                     return SVG_CONFIG.COLOR_OTHER;
             }
+        }
+        
+        /**
+         * Gets the full note ID (0-11) from string index and fret.
+         */
+        function getAbsoluteNoteIndex(stringIndex, fret) {
+            if (fret === 'X') return null;
+            const stringTuningNote = STRING_TUNING[stringIndex];
+            return (stringTuningNote + fret) % 12;
         }
 
 
@@ -263,9 +276,6 @@
             modeScaleButton.classList.toggle('text-gray-700', currentMode === 'chord');
             modeChordButton.classList.toggle('hover:bg-gray-200', currentMode === 'scale');
             modeScaleButton.classList.toggle('hover:bg-gray-200', currentMode === 'chord');
-            
-            // Toggle legend visibility
-            legendDiv.classList.toggle('hidden', currentMode === 'chord');
             
             // Populate dropdowns based on mode
             populateTypeAndPositionSelectors();
@@ -317,7 +327,9 @@
 
         function calculateChordFingering(rootIndex, typeKey, shapeKey) {
             const rootNoteName = NOTE_INFO[rootIndex].name;
-            const chordTypeName = CHORD_DEFINITIONS[typeKey].name;
+            const chordDef = CHORD_DEFINITIONS[typeKey];
+            const chordTypeName = chordDef.name;
+            const chordIntervals = chordDef.intervals;
 
             // 1. Handle Open Position (Fixed Fingerings)
             if (shapeKey === 'open_position') {
@@ -329,16 +341,21 @@
                 }
                 
                 const fingering = openChordData.finger.map((fretValue, i) => {
-                    const absoluteFret = fretValue === 'X' ? fretValue : fretValue;
-                    const isRoot = (i === openChordData.rootString && fretValue !== 'X');
-                    const noteName = fretValue === 'X' ? '' : getNoteName(i, absoluteFret);
-
+                    if (fretValue === 'X') {
+                        return { string: i, fret: 'X', isChordTone: false };
+                    }
+                    
+                    const absoluteNoteIndex = getAbsoluteNoteIndex(i, fretValue);
+                    const interval = getInterval(rootIndex, absoluteNoteIndex);
+                    const isChordTone = chordIntervals.includes(interval);
+                    
                     return { 
                         string: i, 
                         fret: fretValue,
-                        isRoot: isRoot,
-                        noteName: noteName,
-                        color: isRoot ? SVG_CONFIG.COLOR_ROOT : SVG_CONFIG.COLOR_OTHER // Simple coloring for chords
+                        isChordTone: isChordTone,
+                        noteName: getNoteName(i, fretValue), // Note Name is now the primary label
+                        interval: interval,
+                        color: isChordTone ? getNoteColor(interval) : SVG_CONFIG.COLOR_OTHER
                     };
                 });
                 
@@ -347,7 +364,7 @@
                     fingering: fingering,
                     barreFret: null, 
                     displayStartFret: 1,
-                    stringsToBarre: []
+                    stringsToBarre: [],
                 };
             }
             
@@ -364,8 +381,8 @@
             let stringsToBarre = [];
 
             const fingering = fretPattern.map((patternValue, stringIndex) => {
-                if (patternValue === 'X' || patternValue === 0) {
-                    return { string: stringIndex, fret: patternValue };
+                if (patternValue === 'X') {
+                    return { string: stringIndex, fret: 'X', isChordTone: false };
                 }
                 
                 const finalFret = barreFret + (patternValue - 1);
@@ -374,15 +391,17 @@
 
                 if (patternValue === 1) { stringsToBarre.push(stringIndex); }
                 
-                const isRoot = (stringIndex === rootStringIndex && patternValue === 1);
-                const noteName = getNoteName(stringIndex, finalFret);
+                const absoluteNoteIndex = getAbsoluteNoteIndex(stringIndex, finalFret);
+                const interval = getInterval(rootIndex, absoluteNoteIndex);
+                const isChordTone = chordIntervals.includes(interval);
 
                 return { 
                     string: stringIndex, 
                     fret: finalFret, 
-                    isRoot: isRoot,
-                    noteName: noteName,
-                    color: isRoot ? SVG_CONFIG.COLOR_ROOT : SVG_CONFIG.COLOR_OTHER
+                    isChordTone: isChordTone,
+                    noteName: getNoteName(stringIndex, finalFret),
+                    interval: interval,
+                    color: isChordTone ? getNoteColor(interval) : SVG_CONFIG.COLOR_OTHER
                 };
             });
             
@@ -390,6 +409,7 @@
             
             let finalDisplayStartFret = 1;
             if (highestFrettedNote > SVG_CONFIG.TOTAL_FRETS) {
+                // Determine the starting fret of the 5-fret window
                 finalDisplayStartFret = Math.max(1, highestFrettedNote - SVG_CONFIG.TOTAL_FRETS + 1);
             }
 
@@ -398,11 +418,11 @@
                 fingering: fingering,
                 barreFret: showBarre ? barreFret : null,
                 displayStartFret: finalDisplayStartFret,
-                stringsToBarre: showBarre ? stringsToBarre : []
+                stringsToBarre: showBarre ? stringsToBarre : [],
             };
         }
         
-        // --- SCALE CALCULATION LOGIC (ACCURATE MAPPING) ---
+        // --- SCALE CALCULATION LOGIC ---
 
         function calculateScaleFingering(rootIndex, scaleTypeKey, startFret) {
             const rootNoteName = NOTE_INFO[rootIndex].name;
@@ -419,40 +439,30 @@
 
             // Iterate through every position in the 5-fret window
             for (let stringIndex = 0; stringIndex < SVG_CONFIG.TOTAL_STRINGS; stringIndex++) {
-                // Determine the range of frets to check (including Fret 0 if the chart starts at 1)
                 const startFretLoop = displayStartFret === 1 ? 0 : displayStartFret;
                 const endFretLoop = displayEndFret;
 
                 for (let fret = startFretLoop; fret <= endFretLoop; fret++) {
                     
-                    // Skip fret 0 if it's not the start position
                     if (fret === 0 && displayStartFret > 1) continue;
                     
-                    const stringTuningNote = STRING_TUNING[stringIndex];
-                    const absoluteNoteIndex = (stringTuningNote + fret) % 12;
-                    
-                    // Calculate the note's interval relative to the selected root
+                    const absoluteNoteIndex = getAbsoluteNoteIndex(stringIndex, fret);
                     const interval = getInterval(rootIndex, absoluteNoteIndex);
 
                     // Check if this interval is part of the selected scale
                     if (scaleDef.intervals.includes(interval)) {
                         
-                        const isRoot = (interval === 0);
-                        const noteName = NOTE_INFO[absoluteNoteIndex].name;
-
-                        // For display, use 0 for the open string dot, and actual fret number for fretted notes
                         const fretToDisplay = fret;
                         
-                        // Add note, ensuring we only push fretted notes within the window or open notes
                         if (fretToDisplay === 0 || (fretToDisplay >= displayStartFret && fretToDisplay <= displayEndFret)) {
-                             // Check for duplicates
+                            // Check for duplicates
                             if (!fingering.some(f => f.string === stringIndex && f.fret === fretToDisplay)) {
                                 fingering.push({
                                     string: stringIndex,
                                     fret: fretToDisplay,
-                                    isRoot: isRoot,
-                                    noteName: noteName,
-                                    color: getScaleNoteColor(interval),
+                                    noteName: NOTE_INFO[absoluteNoteIndex].name,
+                                    interval: interval,
+                                    color: getNoteColor(interval),
                                 });
                             }
                         }
@@ -473,18 +483,18 @@
                 fingering: fingering,
                 barreFret: null, 
                 displayStartFret: displayStartFret,
-                stringsToBarre: []
+                stringsToBarre: [],
             };
         }
 
         /**
          * Draws the vertical chord/scale diagram using SVG.
          */
-        function drawFretboard(chordData) {
+        function drawFretboard(data) {
             const svg = fretboardSvg;
             svg.innerHTML = '';
             
-            const { fingering, barreFret, stringsToBarre, displayStartFret } = chordData;
+            const { fingering, barreFret, stringsToBarre, displayStartFret } = data;
             
             const FRET_H = SVG_CONFIG.FRET_HEIGHT;
             const STRING_W = SVG_CONFIG.STRING_SPACING * (SVG_CONFIG.TOTAL_STRINGS - 1);
@@ -526,7 +536,7 @@
                 svg.innerHTML += `<line x1="${x}" y1="${START_Y}" x2="${x}" y2="${y2}" stroke="#374151" stroke-width="1" />`;
             }
 
-            // --- 3. Draw Barre Line (Only in Chord Mode) ---
+            // --- 3. Draw Barre Line (Only in Chord Mode, drawn first so dots overlay) ---
             if (currentMode === 'chord' && barreFret !== null && stringsToBarre.length > 0) {
                 const barreFretOffset = barreFret - displayStartFret;
                 
@@ -555,47 +565,48 @@
 
 
             // --- 4. Draw Finger Dots (Notes) ---
-            // Sort by fret to ensure open/muted notes are drawn properly if start fret is 1
             fingering.sort((a, b) => a.fret - b.fret).forEach(f => {
                 const stringX = START_X + f.string * SVG_CONFIG.STRING_SPACING;
                 
                 if (f.fret === 'X') {
+                    // Muted string
                     svg.innerHTML += `<text x="${stringX}" y="${START_Y - 10}" text-anchor="middle" font-size="20" font-weight="bold" fill="#ef4444">X</text>`;
                 } else if (f.fret === 0) {
                     // Open string (Above the start line)
                     const fill = f.color || 'transparent';
-                    // Use color as fill for scales, transparent with border for chords
-                    const stroke = (currentMode === 'chord' && fill === 'transparent') ? '#374151' : 'none'; 
+                    // Stroke for unplayed/unfretted open strings
+                    const stroke = fill === 'transparent' ? '#374151' : 'none'; 
                     
                     svg.innerHTML += `<circle cx="${stringX}" cy="${START_Y - 10}" r="6" fill="${fill}" stroke="${stroke}" stroke-width="2"/>`;
                     
-                    // Add label for open notes in Scale Mode
-                    if (currentMode === 'scale' && fill !== 'transparent') {
-                        const noteText = f.noteName;
-                        const fontSize = (noteText && noteText.length > 1) ? 8 : 10;
-                         svg.innerHTML += `<text x="${stringX}" y="${START_Y - 7}" text-anchor="middle" font-weight="bold" font-size="${fontSize}" fill="white">${noteText}</text>`;
+                    // Add label for open notes (Note Name)
+                    const label = f.noteName;
+                    const labelColor = fill !== 'transparent' ? 'white' : '#374151'; // White for colored dots, dark for uncolored open strings
+                    
+                    if (label) {
+                        const fontSize = (label.length > 1) ? 8 : 10;
+                         svg.innerHTML += `<text x="${stringX}" y="${START_Y - 7}" text-anchor="middle" font-weight="bold" font-size="${fontSize}" fill="${labelColor}">${label}</text>`;
                     }
 
                 } else {
+                    // Fretted note (including barre notes)
                     const fretNumber = f.fret;
                     const fretOffset = fretNumber - displayStartFret;
                     
                     if (fretOffset >= 0 && fretOffset < TOTAL_FRETS) {
                         const fingerY = START_Y + fretOffset * FRET_H + FRET_H / 2;
                         
-                        let isCoveredByBarre = (currentMode === 'chord' && barreFret === fretNumber && stringsToBarre.includes(f.string));
-
-                        if (!isCoveredByBarre) {
-                            const fill = f.color || SVG_CONFIG.COLOR_OTHER;
-                            const noteText = f.noteName; 
-                            
-                            // Draw the finger dot
-                            svg.innerHTML += `<circle cx="${stringX}" cy="${fingerY}" r="${FINGER_R}" fill="${fill}" class="key-shadow"/>`;
-                            
-                            // Draw the note name inside the dot
-                            const fontSize = (noteText && noteText.length > 1) ? 10 : 12;
-                            svg.innerHTML += `<text x="${stringX}" y="${fingerY + 4}" text-anchor="middle" font-weight="bold" font-size="${fontSize}" fill="white">${noteText}</text>`;
-                        }
+                        // We draw ALL fretted notes now, allowing barre notes to overlay the blue line.
+                        
+                        const fill = f.color || SVG_CONFIG.COLOR_OTHER;
+                        const noteText = f.noteName; 
+                        
+                        // Draw the finger dot
+                        svg.innerHTML += `<circle cx="${stringX}" cy="${fingerY}" r="${FINGER_R}" fill="${fill}" class="key-shadow"/>`;
+                        
+                        // Draw the note name inside the dot
+                        const fontSize = (noteText && noteText.length > 1) ? 10 : 12;
+                        svg.innerHTML += `<text x="${stringX}" y="${fingerY + 4}" text-anchor="middle" font-weight="bold" font-size="${fontSize}" fill="white">${noteText}</text>`;
                     }
                 }
             });
@@ -620,7 +631,7 @@
                 }
             });
         }
-
+        
         /**
          * Main function to update the visualization based on user selection.
          */
@@ -634,25 +645,24 @@
             fretboardSvg.innerHTML = ''; 
             resultNameH2.textContent = '';
 
-            let chordData;
+            let data;
 
             if (currentMode === 'chord') {
-                chordData = calculateChordFingering(rootIndex, typeKey, positionKey);
+                data = calculateChordFingering(rootIndex, typeKey, positionKey);
             } else {
-                // Pass the starting fret number directly
-                chordData = calculateScaleFingering(rootIndex, typeKey, positionKey);
+                data = calculateScaleFingering(rootIndex, typeKey, positionKey);
             }
 
-            if (chordData && chordData.error) {
+            if (data && data.error) {
                 const typeName = currentMode === 'chord' ? CHORD_DEFINITIONS[typeKey].name : SCALE_DEFINITIONS[typeKey].name;
                 resultNameH2.textContent = `${NOTE_INFO[rootIndex].name} ${typeName}`;
-                messageAreaP.textContent = chordData.error;
+                messageAreaP.textContent = data.error;
                 return;
             }
 
-            if (chordData) {
-                resultNameH2.textContent = chordData.name;
-                drawFretboard(chordData);
+            if (data) {
+                resultNameH2.textContent = data.name;
+                drawFretboard(data);
             }
         }
         
