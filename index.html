@@ -87,8 +87,6 @@
         </div>
 
         <div class="flex flex-col items-center">
-            <h2 id="resultName" class="text-xl font-semibold text-gray-800 mb-3 text-center h-6"></h2>
-            <p id="messageArea" class="text-red-500 mb-4 h-6 text-center"></p>
             <div id="fretboardContainer" class="relative w-full max-w-md p-2 bg-gray-100 rounded-lg key-shadow">
                 <svg id="fretboardSvg" width="100%" height="480" preserveAspectRatio="xMidYMid meet"></svg>
             </div>
@@ -192,7 +190,7 @@
             STRING_SPACING: window.innerWidth <= 480 ? 60 : 80,
             CHART_START_Y: window.innerWidth <= 480 ? 50 : 70,
             NUT_THICKNESS: 10,
-            FINGER_RADIUS: window.innerWidth <= 480 ? 16 : 22, // reduced
+            FINGER_RADIUS: window.innerWidth <= 480 ? 16 : 22,
             COLOR_ROOT: '#ef4444',
             COLOR_THIRD: '#facc15',
             COLOR_FIFTH: '#10b981',
@@ -206,8 +204,6 @@
         let positionSelector;
         let typeLabel;
         let positionLabel;
-        let resultNameH2;
-        let messageAreaP;
         let fretboardSvg;
         let intervalLegendDiv;
 
@@ -486,7 +482,7 @@
                     }
                 }
             });
-            // Smaller dot markers
+            // Dot markers
             const dotFrets = [3, 5, 7, 9, 12];
             const dotX = START_X + STRING_W / 2;
             const dotR = 7; 
@@ -509,9 +505,7 @@
             const rootIndex = parseInt(rootNoteSelect.value);
             const typeKey = typeSelector.value;
             const positionKey = positionSelector.value;
-            messageAreaP.textContent = '';
             fretboardSvg.innerHTML = ''; 
-            resultNameH2.textContent = '';
             let data;
             if (currentMode === 'chord') {
                 data = calculateChordFingering(rootIndex, typeKey, positionKey);
@@ -519,13 +513,9 @@
                 data = calculateScaleFingering(rootIndex, typeKey, positionKey);
             }
             if (data && data.error) {
-                const typeName = currentMode === 'chord' ? CHORD_DEFINITIONS[typeKey].name : SCALE_DEFINITIONS[typeKey].name;
-                resultNameH2.textContent = `${NOTE_INFO[rootIndex].name} ${typeName}`;
-                messageAreaP.textContent = data.error;
                 return;
             }
             if (data) {
-                resultNameH2.textContent = data.name;
                 drawFretboard(data);
             }
         }
@@ -538,8 +528,6 @@
             positionSelector = document.getElementById('positionSelector');
             typeLabel = document.getElementById('typeLabel');
             positionLabel = document.getElementById('positionLabel');
-            resultNameH2 = document.getElementById('resultName');
-            messageAreaP = document.getElementById('messageArea');
             fretboardSvg = document.getElementById('fretboardSvg');
             intervalLegendDiv = document.getElementById('intervalLegend');
             modeChordButton.addEventListener('click', () => updateMode('chord'));
