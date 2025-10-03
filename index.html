@@ -114,7 +114,7 @@
         // Standard guitar tuning in semitone indices (E A D G B E)
         const STRING_TUNING = [4, 9, 2, 7, 11, 4]; 
         
-        // --- CHORD DATA (rest of data definitions removed for brevity, they remain the same) ---
+        // --- CHORD DATA ---
         const CHORD_DEFINITIONS = {
             'major': { name: 'Major', intervals: [0, 4, 7] },
             'minor': { name: 'Minor', intervals: [0, 3, 7] },
@@ -220,8 +220,7 @@
         ];
 
         // --- Helper Functions ---
-        
-        // (getNoteName, getInterval, getNoteColor, getAbsoluteNoteIndex functions remain unchanged)
+
         function getNoteName(stringIndex, fret) {
             if (fret === 'X') return '';
             const stringTuningNote = STRING_TUNING[stringIndex];
@@ -321,7 +320,7 @@
             }
         }
         
-        // --- CHORD CALCULATION LOGIC (functions remain unchanged) ---
+        // --- CHORD CALCULATION LOGIC ---
 
         function calculateChordFingering(rootIndex, typeKey, shapeKey) {
             const rootNoteName = NOTE_INFO[rootIndex].name;
@@ -406,7 +405,7 @@
             };
         }
         
-        // --- SCALE CALCULATION LOGIC (functions remain unchanged) ---
+        // --- SCALE CALCULATION LOGIC ---
 
         function calculateScaleFingering(rootIndex, scaleTypeKey, startFret) {
             const rootNoteName = NOTE_INFO[rootIndex].name;
@@ -422,6 +421,7 @@
             const fingering = [];
 
             for (let stringIndex = 0; stringIndex < SVG_CONFIG.TOTAL_STRINGS; stringIndex++) {
+                // If starting at fret 1, we include fret 0 (open string) in the calculation range
                 const startFretLoop = displayStartFret === 1 ? 0 : displayStartFret;
                 const endFretLoop = displayEndFret;
 
@@ -436,6 +436,7 @@
                         
                         const fretToDisplay = fret;
                         
+                        // Only display notes that fall within the visible 5-fret window (or are open strings)
                         if (fretToDisplay === 0 || (fretToDisplay >= displayStartFret && fretToDisplay <= displayEndFret)) {
                             if (!fingering.some(f => f.string === stringIndex && f.fret === fretToDisplay)) {
                                 fingering.push({
@@ -467,10 +468,12 @@
             };
         }
 
-        // --- DRAWING LOGIC (function remains unchanged) ---
+        /**
+         * Draws the vertical chord/scale diagram using SVG.
+         */
         function drawFretboard(data) {
             const svg = fretboardSvg;
-            svg.innerHTML = ''; 
+            svg.innerHTML = ''; // Clear previous drawing
             
             const { fingering, barreFret, stringsToBarre, displayStartFret } = data;
             
@@ -483,6 +486,8 @@
             const LABEL_AREA_W = 50; 
             const STRING_W = (TOTAL_STRINGS - 1) * STRING_SPACING; 
             const START_Y = SVG_CONFIG.CHART_START_Y; 
+            
+            // CRITICAL FIX: The Nut should show whenever the chart starts at the 1st fret position (displayStartFret === 1)
             const showNut = (displayStartFret === 1); 
 
             const svgWidth = svg.getBoundingClientRect().width; 
@@ -494,27 +499,33 @@
             const svgHeight = START_Y + TOTAL_FRETS * FRET_H + 50; 
             svg.setAttribute('height', svgHeight);
             
-            // 1. Draw Fret Lines (Horizontal)
-            if (showNut && currentMode === 'chord') {
+            // --- 1. Draw Fret Lines (Horizontal) ---
+
+            if (showNut) { // Draw the thick Nut if starting at the 1st fret position, regardless of mode
+                // Draw the thick Nut (Fret 0)
                 gContent += `<rect x="${START_X - 2}" y="${START_Y - SVG_CONFIG.NUT_THICKNESS / 2}" width="${STRING_W + 4}" height="${SVG_CONFIG.NUT_THICKNESS}" fill="#374151"/>`;
             } else {
+                // Draw the start fret line (thin line for fret > 1)
                 gContent += `<line x1="${START_X}" y1="${START_Y}" x2="${START_X + STRING_W}" y2="${START_Y}" stroke="#374151" stroke-width="2" />`;
+                
+                // Fret label for the chart start
                 gContent += `<text x="${START_X - 25}" y="${START_Y + 7}" text-anchor="end" font-size="16" fill="#374151">${displayStartFret}fr</text>`;
             }
 
+            // Draw the remaining fret lines (fret 1 to 5)
             for (let i = 1; i <= TOTAL_FRETS; i++) {
                 const y = START_Y + i * FRET_H;
                 gContent += `<line x1="${START_X}" y1="${y}" x2="${START_X + STRING_W}" y2="${y}" stroke="#374151" stroke-width="2" />`;
             }
 
-            // 2. Draw String Lines (Vertical)
+            // --- 2. Draw String Lines (Vertical) ---
             for (let i = 0; i < TOTAL_STRINGS; i++) {
                 const x = START_X + i * STRING_SPACING;
                 const y2 = START_Y + TOTAL_FRETS * FRET_H;
                 gContent += `<line x1="${x}" y1="${START_Y}" x2="${x}" y2="${y2}" stroke="#374151" stroke-width="1" />`;
             }
 
-            // 3. Draw Barre Line
+            // --- 3. Draw Barre Line ---
             if (currentMode === 'chord' && barreFret !== null && stringsToBarre.length > 0) {
                 const barreFretOffset = barreFret - displayStartFret;
                 
@@ -540,7 +551,7 @@
                 }
             }
 
-            // 4. Draw Finger Dots (Notes)
+            // --- 4. Draw Finger Dots (Notes) ---
             fingering.sort((a, b) => a.fret - b.fret).forEach(f => {
                 const stringX = START_X + f.string * STRING_SPACING;
                 
@@ -550,6 +561,7 @@
                     const fill = f.color || 'transparent';
                     const stroke = fill === 'transparent' ? '#374151' : 'none'; 
                     
+                    // Note drawn above the Nut/start line
                     gContent += `<circle cx="${stringX}" cy="${START_Y - 10}" r="8" fill="${fill}" stroke="${stroke}" stroke-width="2"/>`;
                     
                     const label = f.noteName;
@@ -578,7 +590,7 @@
                 }
             });
 
-            // 5. Draw Fret Markers (Dots for 3, 5, etc.)
+            // --- 5. Draw Fret Markers (Dots for 3, 5, etc.) ---
             const dotFrets = [3, 5, 7, 9, 12];
             const dotX = START_X + STRING_W / 2;
             const dotR = 6; 
@@ -666,6 +678,10 @@
             ).join('');
             rootNoteSelect.value = 4; // Default to E for consistency
             
+            // Initial button styling setup
+            modeChordButton.classList.add(...ACTIVE_COLOR_CLASSES); // Start active
+            modeScaleButton.classList.add(...INACTIVE_COLOR_CLASSES); // Start inactive
+
             // Initial call to set default mode and styling
             updateMode('chord'); 
         }
