@@ -173,7 +173,7 @@
             STRING_SPACING: window.innerWidth <= 480 ? 60 : 80,
             CHART_START_Y: window.innerWidth <= 480 ? 50 : 70,
             NUT_THICKNESS: 10,
-            FINGER_RADIUS: window.innerWidth <= 480 ? 20 : 27,
+            FINGER_RADIUS: window.innerWidth <= 480 ? 16 : 22, // reduced from 20/27
             COLOR_ROOT: '#ef4444',
             COLOR_THIRD: '#facc15',
             COLOR_FIFTH: '#10b981',
@@ -437,7 +437,7 @@
                     const firstBarreStringX = START_X + stringsToBarre[0] * STRING_SPACING;
                     const lastBarreStringX = START_X + stringsToBarre[stringsToBarre.length - 1] * STRING_SPACING;
                     gContent += `<line x1="${firstBarreStringX}" y1="${barreY}" x2="${lastBarreStringX}" y2="${barreY}" stroke="#3b82f6" stroke-width="8" stroke-linecap="round" opacity="0.6"/>`;
-                    gContent += `<text x="${START_X - 22}" y="${barreY + 6}" text-anchor="end" font-size="14" font-weight="bold" fill="#3b82f6">${barreFret}fr</text>`;
+                    gContent += `<text x="${START_X - 22}" y="${barreY + 6}" text-anchor="end" font-size="11" font-weight="bold" fill="#3b82f6">${barreFret}fr</text>`;
                 }
             }
             fingering.sort((a, b) => a.fret - b.fret).forEach(f => {
@@ -532,7 +532,7 @@
                 SVG_CONFIG.FRET_HEIGHT = window.innerWidth <= 480 ? 60 : 80;
                 SVG_CONFIG.STRING_SPACING = window.innerWidth <= 480 ? 60 : 80;
                 SVG_CONFIG.CHART_START_Y = window.innerWidth <= 480 ? 50 : 70;
-                SVG_CONFIG.FINGER_RADIUS = window.innerWidth <= 480 ? 20 : 27;
+                SVG_CONFIG.FINGER_RADIUS = window.innerWidth <= 480 ? 16 : 22;
                 updateVisualization();
             });
             rootNoteSelect.innerHTML = NOTE_INFO.map(note => 
