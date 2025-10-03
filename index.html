@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Fretboard Visualizer (Accurate Scales & Intervals)</title>
+    <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Custom styles for the visualizer */
@@ -11,7 +12,6 @@
             font-family: 'Inter', sans-serif;
             background-color: #f7f9fb;
         }
-        /* Applied to main containers for depth */
         .key-shadow {
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 2px, 4px, 0.06);
         }
@@ -19,13 +19,9 @@
         body {
             height: 100vh;
         }
-        /* Highlight for the active mode button (The "Pressed Key" Look) */
+        /* Highlight for the active mode button */
         .mode-active {
-            /* Sets the active color */
-            @apply bg-blue-600 text-white;
-            /* Simulates the button being pressed down */
-            @apply shadow-inner border-b-2 border-r-2 border-blue-800 translate-y-px;
-            transform: translateY(2px) !important; /* Ensure the press effect applies */
+            @apply bg-blue-600 text-white shadow-lg;
         }
     </style>
 </head>
@@ -41,44 +37,53 @@
             </p>
         </header>
         
-        <div class="flex justify-center mb-6 max-w-sm mx-auto p-1 bg-transparent rounded-xl gap-2">
-            <button id="modeChord" data-mode="chord" class="flex-1 py-3 text-base font-bold rounded-xl transition transform duration-100 ease-out 
-                bg-white text-gray-800 border-b-4 border-r-2 border-gray-400 shadow-md hover:bg-gray-100">Chord Mode</button>
-            
-            <button id="modeScale" data-mode="scale" class="flex-1 py-3 text-base font-bold rounded-xl transition transform duration-100 ease-out 
-                bg-white text-gray-800 border-b-4 border-r-2 border-gray-400 shadow-md hover:bg-gray-100">Scale Mode</button>
+        <!-- Mode Switch -->
+        <div class="flex justify-center mb-6 max-w-sm mx-auto p-1 bg-gray-100 rounded-lg key-shadow">
+            <button id="modeChord" data-mode="chord" class="flex-1 py-2 text-sm font-semibold rounded-lg transition mode-active">Chord Mode</button>
+            <button id="modeScale" data-mode="scale" class="flex-1 py-2 text-sm font-semibold rounded-lg transition text-gray-700 hover:bg-gray-200">Scale Mode</button>
         </div>
 
+        <!-- Selection Controls: 3 Dropdowns for maximum flexibility -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6 max-w-2xl mx-auto">
 
+            <!-- 1. Root Note Selector -->
             <div class="space-y-1">
                 <label for="rootNote" class="block text-sm font-medium text-gray-700">Root Note</label>
                 <select id="rootNote" class="block w-full pl-3 pr-10 py-2.5 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-lg rounded-lg border key-shadow bg-gray-50">
-                    </select>
+                    <!-- Options populated by JS -->
+                </select>
             </div>
 
+            <!-- 2. Type Selector (Chord Type or Scale Type) -->
             <div class="space-y-1">
                 <label id="typeLabel" for="typeSelector" class="block text-sm font-medium text-gray-700">Chord Type</label>
                 <select id="typeSelector" class="block w-full pl-3 pr-10 py-2.5 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-lg rounded-lg border key-shadow bg-gray-50">
-                    </select>
+                    <!-- Options populated by JS -->
+                </select>
             </div>
 
-             <div class="space-y-1">
+             <!-- 3. Position/Shape Selector -->
+            <div class="space-y-1">
                 <label id="positionLabel" for="positionSelector" class="block text-sm font-medium text-gray-700">Position / Shape</label>
                 <select id="positionSelector" class="block w-full pl-3 pr-10 py-2.5 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-lg rounded-lg border key-shadow bg-gray-50">
-                    </select>
+                    <!-- Options populated by JS -->
+                </select>
             </div>
         </div>
 
+        <!-- Visualization Area -->
         <div class="flex flex-col items-center">
             <h2 id="resultName" class="text-xl font-semibold text-gray-800 mb-3 text-center h-6"></h2>
             
+            <!-- Message Area for Chords/Scales that don't exist -->
             <p id="messageArea" class="text-red-500 mb-4 h-6 text-center"></p>
             
+            <!-- Fretboard Container: Fixed aspect ratio for vertical chart -->
             <div id="fretboardContainer" class="relative w-full max-w-md p-2 bg-gray-100 rounded-lg key-shadow">
                 <svg id="fretboardSvg" width="100%" height="300" preserveAspectRatio="xMidYMid meet"></svg>
             </div>
 
+            <!-- Legend for BOTH Chord and Scale Mode -->
             <div id="infoArea" class="mt-4 p-4 w-full max-w-lg bg-white rounded-xl shadow border border-gray-200">
                 <div id="intervalLegend" class="text-sm text-gray-700">
                     <h3 class="font-bold mb-2 text-center text-gray-800">Note Function Legend</h3>
@@ -264,10 +269,13 @@
         function updateMode(newMode) {
             currentMode = newMode;
 
-            // Update button styling: Active mode gets the 'mode-active' class (blue/pressed look). 
-            // This is the logic that makes the buttons turn blue.
+            // Update button styling
             modeChordButton.classList.toggle('mode-active', currentMode === 'chord');
             modeScaleButton.classList.toggle('mode-active', currentMode === 'scale');
+            modeChordButton.classList.toggle('text-gray-700', currentMode === 'scale');
+            modeScaleButton.classList.toggle('text-gray-700', currentMode === 'chord');
+            modeChordButton.classList.toggle('hover:bg-gray-200', currentMode === 'scale');
+            modeScaleButton.classList.toggle('hover:bg-gray-200', currentMode === 'chord');
             
             // Populate dropdowns based on mode
             populateTypeAndPositionSelectors();
