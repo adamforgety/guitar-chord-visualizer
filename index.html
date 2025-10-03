@@ -3,7 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Fretboard Visualizer (Accurate Scales & Intervals)</title>
+    <title>GuitarViz</title>
+    <!-- PWA manifest and icons -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="GuitarViz">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+    <!-- Service worker registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('service-worker.js')
+            .then(reg => console.log('Service Worker registered!', reg))
+            .catch(err => console.error('Service Worker registration failed:', err));
+        });
+      }
+    </script>
     <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -40,7 +59,7 @@
     <div class="w-full max-w-4xl bg-white rounded-xl shadow-2xl p-4 md:p-6 h-[98%] overflow-y-auto">
         <header class="mb-6">
             <h1 class="text-3xl md:text-4xl font-extrabold text-gray-900 mb-1 text-center">
-                Guitar Fretboard Visualizer
+                GuitarViz
             </h1>
             <p class="text-center text-gray-600 text-sm md:text-base">
                 Visualize Chords or Scales with accurate note and interval labels.
@@ -173,7 +192,7 @@
             STRING_SPACING: window.innerWidth <= 480 ? 60 : 80,
             CHART_START_Y: window.innerWidth <= 480 ? 50 : 70,
             NUT_THICKNESS: 10,
-            FINGER_RADIUS: window.innerWidth <= 480 ? 16 : 22, // reduced from 20/27
+            FINGER_RADIUS: window.innerWidth <= 480 ? 16 : 22, // reduced
             COLOR_ROOT: '#ef4444',
             COLOR_THIRD: '#facc15',
             COLOR_FIFTH: '#10b981',
