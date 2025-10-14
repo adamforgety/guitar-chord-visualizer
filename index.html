@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>GuitarViz</title>
-    <!-- PWA manifest and icons -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2563eb">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -13,7 +12,6 @@
     <link rel="apple-touch-icon" href="icon-192.png">
     <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
     <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
-    <!-- Service worker registration -->
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
@@ -23,7 +21,6 @@
         });
       }
     </script>
-    <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -65,7 +62,7 @@
                 Visualize harmony anywhere.
             </p>
         </header>
-        
+
         <div class="flex justify-center mb-6 max-w-sm mx-auto p-1 bg-transparent rounded-xl gap-2">
             <button id="modeChord" data-mode="chord" class="flex-1 py-3 text-base font-bold rounded-xl transition duration-150 shadow-md border-b-4 border-r-2">Chord Mode</button>
             <button id="modeScale" data-mode="scale" class="flex-1 py-3 text-base font-bold rounded-xl transition duration-150 shadow-md border-b-4 border-r-2">Scale Mode</button>
@@ -117,7 +114,7 @@
         ];
 
         const STRING_TUNING = [4, 9, 2, 7, 11, 4]; 
-        
+
         const CHORD_DEFINITIONS = {
             'major': { name: 'Major', intervals: [0, 4, 7] },
             'minor': { name: 'Minor', intervals: [0, 3, 7] },
@@ -128,6 +125,7 @@
             'sus4': { name: 'sus4', intervals: [0, 5, 7] },          
         };
         const OPEN_CHORDS = { 
+            // Key format: `${rootIndex}_${typeKey}`
             '9_major': { finger: ['X', 0, 2, 2, 2, 0], rootString: 1, name: 'A Major' }, 
             '0_major': { finger: ['X', 3, 2, 0, 1, 0], rootString: 1, name: 'C Major' }, 
             '2_major': { finger: ['X', 'X', 0, 2, 3, 2], rootString: 3, name: 'D Major' },
@@ -136,6 +134,7 @@
             '9_minor': { finger: ['X', 0, 2, 2, 1, 0], rootString: 1, name: 'A minor' }, 
             '2_minor': { finger: ['X', 'X', 0, 2, 3, 1], rootString: 3, name: 'D minor' },
             '4_minor': { finger: [0, 2, 2, 0, 0, 0], rootString: 0, name: 'E minor' },
+            // Note: F, F#, G#, A#, B, C#, D# Major/minor, and most 7th chords are missing standard open positions
         };
         const SHAPES = {
             'open_position': { name: "Open Position" }, 
@@ -196,7 +195,7 @@
             COLOR_FIFTH: '#10b981',
             COLOR_OTHER: '#3b82f6',
         };
-        
+
         let modeChordButton;
         let modeScaleButton;
         let rootNoteSelect;
@@ -261,6 +260,14 @@
             updateVisualization();
         }
 
+        /**
+         * Checks if a standard open chord voicing exists for the given root and type.
+         */
+        function hasOpenChord(rootIndex, typeKey) {
+            const lookupKey = `${rootIndex}_${typeKey}`;
+            return !!OPEN_CHORDS[lookupKey]; 
+        }
+
         function populateTypeAndPositionSelectors() {
             typeSelector.innerHTML = '';
             positionSelector.innerHTML = '';
@@ -270,11 +277,23 @@
                 typeSelector.innerHTML = Object.entries(CHORD_DEFINITIONS).map(([key, def]) => 
                     `<option value="${key}">${def.name}</option>`
                 ).join('');
-                positionSelector.innerHTML = SHAPE_ORDER.map(key => 
-                    `<option value="${key}">${SHAPES[key].name}</option>`
-                ).join('');
-                typeSelector.value = 'major';
-                positionSelector.value = 'open_position';
+                
+                const initialRootIndex = parseInt(rootNoteSelect.value) || 4; // Default to E (4)
+                const initialTypeKey = typeSelector.value || 'major'; 
+                
+                // Determine if open position is available for the initial selection
+                const openIsAvailable = hasOpenChord(initialRootIndex, initialTypeKey);
+
+                positionSelector.innerHTML = SHAPE_ORDER.map(key => {
+                    // Disable 'open_position' if it's not available for the current default chord
+                    const isDisabled = (key === 'open_position' && !openIsAvailable);
+                    return `<option value="${key}" ${isDisabled ? 'disabled' : ''}>${SHAPES[key].name}</option>`;
+                }).join('');
+                
+                typeSelector.value = initialTypeKey;
+                // Set the default position: 'e_shape' if open isn't available, otherwise 'open_position'
+                positionSelector.value = openIsAvailable ? 'open_position' : 'e_shape';
+
             } else {
                 typeLabel.textContent = 'Scale Type';
                 positionLabel.textContent = 'Fret Start Position';
@@ -289,6 +308,47 @@
             }
         }
 
+        /**
+         * Checks if the Open Position is valid for the current root/type selection.
+         * If it's invalid, it disables the option and forces the position to E-Shape.
+         * @returns {boolean} True if a forced position update occurred, false otherwise.
+         */
+        function updatePositionSelectorState() {
+            const rootIndex = parseInt(rootNoteSelect.value);
+            const typeKey = typeSelector.value;
+            const currentPositionKey = positionSelector.value;
+
+            if (currentMode !== 'chord') return false; 
+
+            const openIsAvailable = hasOpenChord(rootIndex, typeKey);
+            let newPositionKey = currentPositionKey;
+
+            // 1. Update disabled state for Open Position option
+            const options = positionSelector.options;
+            let openOptionIndex = -1;
+            for (let i = 0; i < options.length; i++) {
+                if (options[i].value === 'open_position') {
+                    options[i].disabled = !openIsAvailable;
+                    openOptionIndex = i;
+                    break;
+                }
+            }
+
+            // 2. Default to E-Shape if Open Position is currently selected but is now unavailable
+            if (!openIsAvailable && currentPositionKey === 'open_position') {
+                newPositionKey = 'e_shape'; 
+            }
+            
+            // Update the selector value if it changed
+            if (newPositionKey !== currentPositionKey) {
+                positionSelector.value = newPositionKey;
+                return true; // Forced update occurred
+            }
+            
+            return false; // No forced update
+        }
+
+
         function calculateChordFingering(rootIndex, typeKey, shapeKey) {
             const rootNoteName = NOTE_INFO[rootIndex].name;
             const chordDef = CHORD_DEFINITIONS[typeKey];
@@ -299,6 +359,8 @@
                 const lookupKey = `${rootIndex}_${typeKey}`;
                 const openChordData = OPEN_CHORDS[lookupKey]; 
                 if (!openChordData) {
+                    // This should ideally be blocked by updatePositionSelectorState, 
+                    // but serves as a fallback check.
                     return { error: `No standard ${rootNoteName} ${chordTypeName} found in the Open Position.` };
                 }
                 const fingering = openChordData.finger.map((fretValue, i) => {
@@ -319,7 +381,7 @@
                 });
                 return { name: `${rootNoteName} ${chordTypeName} (Open Position)`, fingering: fingering, barreFret: null, displayStartFret: 1, stringsToBarre: [], };
             }
-            
+
             const shapeData = SHAPES[shapeKey];
             const fretPattern = shapeData.voicings[typeKey];
             const rootStringIndex = shapeData.rootStringIndex;
@@ -504,19 +566,33 @@
         function updateVisualization() {
             const rootIndex = parseInt(rootNoteSelect.value);
             const typeKey = typeSelector.value;
-            const positionKey = positionSelector.value;
+            let positionKey = positionSelector.value;
+
             fretboardSvg.innerHTML = ''; 
+            
+            // Check and update position selector state before calculating visualization
+            if (currentMode === 'chord') {
+                updatePositionSelectorState(); 
+                // Re-read the position value in case it was forced to E-Shape
+                positionKey = positionSelector.value; 
+            }
+
             let data;
             if (currentMode === 'chord') {
                 data = calculateChordFingering(rootIndex, typeKey, positionKey);
             } else {
                 data = calculateScaleFingering(rootIndex, typeKey, positionKey);
             }
+
             if (data && data.error) {
+                // Optionally display the error in the info area
+                document.getElementById('infoArea').querySelector('h3').textContent = data.error;
                 return;
             }
             if (data) {
                 drawFretboard(data);
+                // Reset info area if visualization is successful (optional)
+                document.getElementById('infoArea').querySelector('h3').textContent = 'Note Function Legend';
             }
         }
 
@@ -530,11 +606,14 @@
             positionLabel = document.getElementById('positionLabel');
             fretboardSvg = document.getElementById('fretboardSvg');
             intervalLegendDiv = document.getElementById('intervalLegend');
+            
+            // Attach event listeners for visualization and state updates
             modeChordButton.addEventListener('click', () => updateMode('chord'));
             modeScaleButton.addEventListener('click', () => updateMode('scale'));
             rootNoteSelect.addEventListener('change', updateVisualization);
             typeSelector.addEventListener('change', updateVisualization);
             positionSelector.addEventListener('change', updateVisualization); 
+            
             window.addEventListener('resize', () => {
                 SVG_CONFIG.FRET_HEIGHT = window.innerWidth <= 480 ? 60 : 80;
                 SVG_CONFIG.STRING_SPACING = window.innerWidth <= 480 ? 60 : 80;
@@ -542,10 +621,14 @@
                 SVG_CONFIG.FINGER_RADIUS = window.innerWidth <= 480 ? 16 : 22;
                 updateVisualization();
             });
+
+            // Populate initial root note options
             rootNoteSelect.innerHTML = NOTE_INFO.map(note => 
                 `<option value="${note.id}">${note.name}</option>`
             ).join('');
-            rootNoteSelect.value = 4;
+            rootNoteSelect.value = 4; // Default to E
+            
+            // Set initial mode and styles
             modeChordButton.classList.add(...ACTIVE_COLOR_CLASSES);
             modeScaleButton.classList.add(...INACTIVE_COLOR_CLASSES);
             updateMode('chord');
