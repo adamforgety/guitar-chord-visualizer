@@ -68,7 +68,7 @@
             <button id="modeScale" data-mode="scale" class="flex-1 py-3 text-base font-bold rounded-xl transition duration-150 shadow-md border-b-4 border-r-2">Scale Mode</button>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-6 max-w-3xl mx-auto">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6 max-w-2xl mx-auto">
             <div class="space-y-1">
                 <label for="rootNote" class="block text-sm font-medium text-gray-700">Root Note</label>
                 <select id="rootNote" class="block w-full pl-3 pr-10 py-2.5 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-lg rounded-lg border key-shadow bg-gray-50"></select>
@@ -80,13 +80,6 @@
             <div class="space-y-1">
                 <label id="positionLabel" for="positionSelector" class="block text-sm font-medium text-gray-700">Position / Shape</label>
                 <select id="positionSelector" class="block w-full pl-3 pr-10 py-2.5 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-lg rounded-lg border key-shadow bg-gray-50"></select>
-            </div>
-            <div class="space-y-1">
-                <label for="tuningSelector" class="block text-sm font-medium text-gray-700">Tuning</label>
-                <select id="tuningSelector" class="block w-full pl-3 pr-10 py-2.5 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-lg rounded-lg border key-shadow bg-gray-50">
-                    <option value="standard">Standard (E A D G B E)</option>
-                    <option value="drop_d">Drop D (D A D G B E)</option>
-                </select>
             </div>
         </div>
 
@@ -104,7 +97,7 @@
                         <span class="flex items-center"><span class="w-3 h-3 rounded-full mr-1 bg-blue-500"></span> Other Chord/Scale Notes</span>
                     </div>
                     <p class="text-xs text-center mt-3 text-gray-500">
-                        *Circles display the **Note Name** (Chord Mode) or **Scale Degree** (Scale Mode).*
+                        *Circles display the **Note Name** for direct learning.*
                     </p>
                 </div>
             </div>
@@ -120,18 +113,7 @@
             { id: 9, name: "A" }, { id: 10, name: "A#" }, { id: 11, name: "B" }
         ];
 
-        // Tuning Definitions (MIDI note value for open string EADGBE = 4, 9, 2, 7, 11, 4)
-        const TUNINGS = {
-            'standard': { name: 'Standard (E A D G B E)', notes: [4, 9, 2, 7, 11, 4] },
-            'drop_d':   { name: 'Drop D (D A D G B E)', notes: [2, 9, 2, 7, 11, 4] }
-        };
-
-        const INTERVAL_NAMES = {
-            0: 'R', 1: 'm2', 2: '2', 3: 'm3', 4: '3', 5: '4', 6: 'b5', 7: '5', 8: 'm6', 9: '6', 10: 'b7', 11: '7'
-        };
-
-
-        let STRING_TUNING = TUNINGS.standard.notes; // Current active tuning
+        const STRING_TUNING = [4, 9, 2, 7, 11, 4]; 
 
         const CHORD_DEFINITIONS = {
             'major': { name: 'Major', intervals: [0, 4, 7] },
@@ -144,71 +126,46 @@
         };
         const OPEN_CHORDS = { 
             // Key format: `${rootIndex}_${typeKey}`
-            '9_major': { finger: ['X', 0, 2, 2, 2, 0], fingers: ['X', 0, 2, 3, 4, 0], rootString: 1, name: 'A Major' }, 
-            '0_major': { finger: ['X', 3, 2, 0, 1, 0], fingers: ['X', 3, 2, 0, 1, 0], rootString: 1, name: 'C Major' }, 
-            '2_major': { finger: ['X', 'X', 0, 2, 3, 2], fingers: ['X', 'X', 0, 1, 3, 2], rootString: 3, name: 'D Major' },
-            '4_major': { finger: [0, 2, 2, 1, 0, 0], fingers: [0, 2, 3, 1, 0, 0], rootString: 0, name: 'E Major' },
-            '7_major': { finger: [3, 2, 0, 0, 0, 3], fingers: [3, 2, 0, 0, 0, 4], rootString: 0, name: 'G Major' },
-            '9_minor': { finger: ['X', 0, 2, 2, 1, 0], fingers: ['X', 0, 2, 3, 1, 0], rootString: 1, name: 'A minor' }, 
-            '2_minor': { finger: ['X', 'X', 0, 2, 3, 1], fingers: ['X', 'X', 0, 2, 3, 1], rootString: 3, name: 'D minor' },
-            '4_minor': { finger: [0, 2, 2, 0, 0, 0], fingers: [0, 2, 3, 0, 0, 0], rootString: 0, name: 'E minor' },
+            '9_major': { finger: ['X', 0, 2, 2, 2, 0], rootString: 1, name: 'A Major' }, 
+            '0_major': { finger: ['X', 3, 2, 0, 1, 0], rootString: 1, name: 'C Major' }, 
+            '2_major': { finger: ['X', 'X', 0, 2, 3, 2], rootString: 3, name: 'D Major' },
+            '4_major': { finger: [0, 2, 2, 1, 0, 0], rootString: 0, name: 'E Major' },
+            '7_major': { finger: [3, 2, 0, 0, 0, 3], rootString: 0, name: 'G Major' },
+            '9_minor': { finger: ['X', 0, 2, 2, 1, 0], rootString: 1, name: 'A minor' }, 
+            '2_minor': { finger: ['X', 'X', 0, 2, 3, 1], rootString: 3, name: 'D minor' },
+            '4_minor': { finger: [0, 2, 2, 0, 0, 0], rootString: 0, name: 'E minor' },
+            // Note: F, F#, G#, A#, B, C#, D# Major/minor, and most 7th chords are missing standard open positions
         };
         const SHAPES = {
             'open_position': { name: "Open Position" }, 
             'e_shape': {
                 name: "E-Shape (6th String Root)",
                 voicings: {
-                    // Fret pattern: 1 is barre fret. Finger pattern: 1 is index/barre
-                    'major':    { frets: [1, 3, 3, 2, 1, 1], fingers: [1, 3, 4, 2, 1, 1], rootString: 0 }, 
-                    'minor':    { frets: [1, 3, 3, 1, 1, 1], fingers: [1, 3, 4, 1, 1, 1], rootString: 0 }, 
-                    'dom7':     { frets: [1, 3, 2, 2, 1, 1], fingers: [1, 4, 2, 3, 1, 1], rootString: 0 }, 
-                    'min7':     { frets: [1, 3, 1, 2, 1, 1], fingers: [1, 4, 1, 3, 1, 1], rootString: 0 },
-                    'maj7':     { frets: [1, 3, 2, 3, 4, 1], fingers: [1, 2, 1, 3, 4, 1], rootString: 0 }, // Using a common 13x341 shape
-                    'sus2':     { frets: [1, 3, 3, 1, 1, 1], fingers: [1, 3, 4, 1, 1, 1], rootString: 0 }, // Same as minor here for simplicity
-                    'sus4':     { frets: [1, 3, 4, 4, 1, 1], fingers: [1, 2, 3, 4, 1, 1], rootString: 0 }, 
+                    'major':    [1, 3, 3, 2, 1, 1], 
+                    'minor':    [1, 3, 3, 1, 1, 1], 
+                    'dom7':     [1, 3, 2, 2, 1, 1], 
+                    'min7':     [1, 3, 1, 2, 1, 1],
+                    'maj7':     [1, 3, 2, 3, 4, 1], 
+                    'sus2':     [1, 3, 3, 1, 1, 1], 
+                    'sus4':     [1, 3, 4, 4, 1, 1], 
                 },
                 rootStringIndex: 0
             },
             'a_shape': {
                 name: "A-Shape (5th String Root)",
                 voicings: {
-                    'major':    { frets: ['X', 1, 3, 3, 3, 1], fingers: ['X', 1, 2, 3, 4, 1], rootString: 1 }, 
-                    'minor':    { frets: ['X', 1, 3, 3, 2, 1], fingers: ['X', 1, 3, 4, 2, 1], rootString: 1 }, 
-                    'dom7':     { frets: ['X', 1, 3, 2, 3, 1], fingers: ['X', 1, 3, 2, 4, 1], rootString: 1 }, 
-                    'min7':     { frets: ['X', 1, 2, 2, 3, 1], fingers: ['X', 1, 2, 3, 4, 1], rootString: 1 },
-                    'maj7':     { frets: ['X', 1, 3, 2, 1, 1], fingers: ['X', 1, 4, 2, 1, 1], rootString: 1 }, 
-                    'sus2':     { frets: ['X', 1, 3, 3, 1, 1], fingers: ['X', 1, 3, 4, 1, 1], rootString: 1 }, 
-                    'sus4':     { frets: ['X', 1, 3, 3, 4, 1], fingers: ['X', 1, 2, 3, 4, 1], rootString: 1 }, 
+                    'major':    ['X', 1, 3, 3, 3, 1], 
+                    'minor':    ['X', 1, 3, 3, 2, 1], 
+                    'dom7':     ['X', 1, 3, 2, 3, 1], 
+                    'min7':     ['X', 1, 2, 2, 3, 1],
+                    'maj7':     ['X', 1, 3, 2, 1, 1], 
+                    'sus2':     ['X', 1, 3, 3, 1, 1], 
+                    'sus4':     ['X', 1, 3, 3, 4, 1], 
                 },
                 rootStringIndex: 1
-            },
-            'g_shape': {
-                name: "G-Shape (6th String Root/Complex)",
-                voicings: {
-                    'major':    { frets: [1, 3, 4, 4, 3, 1], fingers: [1, 2, 3, 4, 2, 1], rootString: 0 }, 
-                    'minor':    { frets: [1, 3, 4, 3, 3, 1], fingers: [1, 2, 4, 3, 3, 1], rootString: 0 }, 
-                },
-                rootStringIndex: 0
-            },
-            'c_shape': {
-                name: "C-Shape (5th String Root/Complex)",
-                voicings: {
-                    'major':    { frets: ['X', 1, 3, 3, 3, 1], fingers: ['X', 1, 2, 3, 4, 1], rootString: 1 }, // Using A shape as a standard C-form barre is less common
-                    'minor':    { frets: ['X', 1, 3, 3, 2, 1], fingers: ['X', 1, 3, 4, 2, 1], rootString: 1 }, 
-                },
-                rootStringIndex: 1
-            },
-            'd_shape': {
-                name: "D-Shape (4th String Root)",
-                voicings: {
-                    'major':    { frets: ['X', 'X', 1, 3, 4, 3], fingers: ['X', 'X', 1, 3, 4, 2], rootString: 2 }, 
-                    'minor':    { frets: ['X', 'X', 1, 3, 4, 2], fingers: ['X', 'X', 1, 3, 4, 2], rootString: 2 }, 
-                },
-                rootStringIndex: 2
             },
         };
-        // Order: Open, E-Shape, A-Shape, G-Shape, C-Shape, D-Shape
-        const SHAPE_ORDER = ['open_position', 'e_shape', 'a_shape', 'g_shape', 'c_shape', 'd_shape'];
+        const SHAPE_ORDER = ['open_position', 'e_shape', 'a_shape'];
 
         const SCALE_DEFINITIONS = {
             'major': { name: 'Major (Ionian)', intervals: [0, 2, 4, 5, 7, 9, 11] },
@@ -217,11 +174,11 @@
         };
 
         const SCALE_POSITIONS = [
-            { key: 'p1', name: 'Pattern 1 (Starts Fret 1)', startFret: 1 },
-            { key: 'p3', name: 'Pattern 2 (Starts Fret 3)', startFret: 3 },
-            { key: 'p5', name: 'Pattern 3 (Starts Fret 5)', startFret: 5 },
-            { key: 'p7', name: 'Pattern 4 (Starts Fret 7)', startFret: 7 },
-            { key: 'p10', name: 'Pattern 5 (Starts Fret 10)', startFret: 10 },
+            { key: 'p1', name: 'Position 1 (Starts Fret 1)', startFret: 1 },
+            { key: 'p3', name: 'Position 3 (Starts Fret 3)', startFret: 3 },
+            { key: 'p5', name: 'Position 5 (Starts Fret 5)', startFret: 5 },
+            { key: 'p7', name: 'Position 7 (Starts Fret 7)', startFret: 7 },
+            { key: 'p10', name: 'Position 10 (Starts Fret 10)', startFret: 10 },
         ];
 
         // --- Fretboard & SVG Configuration ---
@@ -233,7 +190,6 @@
             CHART_START_Y: window.innerWidth <= 480 ? 50 : 70,
             NUT_THICKNESS: 10,
             FINGER_RADIUS: window.innerWidth <= 480 ? 16 : 22,
-            LABEL_AREA_W: 36, // Width for fret numbers on the left
             COLOR_ROOT: '#ef4444',
             COLOR_THIRD: '#facc15',
             COLOR_FIFTH: '#10b981',
@@ -245,7 +201,6 @@
         let rootNoteSelect;
         let typeSelector;
         let positionSelector;
-        let tuningSelector;
         let typeLabel;
         let positionLabel;
         let fretboardSvg;
@@ -261,16 +216,13 @@
         ];
 
         function getNoteName(stringIndex, fret) {
-            if (fret === 'X' || fret === null) return '';
+            if (fret === 'X') return '';
             const stringTuningNote = STRING_TUNING[stringIndex];
             const noteIndex = (stringTuningNote + fret) % 12;
             return NOTE_INFO[noteIndex].name;
         }
         function getInterval(rootIndex, noteIndex) {
             return (noteIndex - rootIndex + 12) % 12;
-        }
-        function getIntervalName(interval) {
-            return INTERVAL_NAMES[interval] || '';
         }
         function getNoteColor(interval) {
             switch (interval) {
@@ -285,7 +237,7 @@
             }
         }
         function getAbsoluteNoteIndex(stringIndex, fret) {
-            if (fret === 'X' || fret === null) return null;
+            if (fret === 'X') return null;
             const stringTuningNote = STRING_TUNING[stringIndex];
             return (stringTuningNote + fret) % 12;
         }
@@ -308,19 +260,12 @@
             updateVisualization();
         }
 
-        function handleTuningChange() {
-            const tuningKey = tuningSelector.value;
-            STRING_TUNING = TUNINGS[tuningKey].notes;
-            updateVisualization();
-        }
-
         /**
          * Checks if a standard open chord voicing exists for the given root and type.
          */
         function hasOpenChord(rootIndex, typeKey) {
             const lookupKey = `${rootIndex}_${typeKey}`;
-            // Check if the open chord exists AND if the tuning is standard (open chords are tuning-dependent)
-            return (tuningSelector.value === 'standard' && !!OPEN_CHORDS[lookupKey]); 
+            return !!OPEN_CHORDS[lookupKey]; 
         }
 
         function populateTypeAndPositionSelectors() {
@@ -333,22 +278,25 @@
                     `<option value="${key}">${def.name}</option>`
                 ).join('');
                 
-                const initialRootIndex = parseInt(rootNoteSelect.value) || 4; 
+                const initialRootIndex = parseInt(rootNoteSelect.value) || 4; // Default to E (4)
                 const initialTypeKey = typeSelector.value || 'major'; 
                 
+                // Determine if open position is available for the initial selection
                 const openIsAvailable = hasOpenChord(initialRootIndex, initialTypeKey);
 
                 positionSelector.innerHTML = SHAPE_ORDER.map(key => {
+                    // Disable 'open_position' if it's not available for the current default chord
                     const isDisabled = (key === 'open_position' && !openIsAvailable);
                     return `<option value="${key}" ${isDisabled ? 'disabled' : ''}>${SHAPES[key].name}</option>`;
                 }).join('');
                 
                 typeSelector.value = initialTypeKey;
+                // Set the default position: 'e_shape' if open isn't available, otherwise 'open_position'
                 positionSelector.value = openIsAvailable ? 'open_position' : 'e_shape';
 
             } else {
                 typeLabel.textContent = 'Scale Type';
-                positionLabel.textContent = 'Fret Start Pattern';
+                positionLabel.textContent = 'Fret Start Position';
                 typeSelector.innerHTML = Object.entries(SCALE_DEFINITIONS).map(([key, def]) => 
                     `<option value="${key}">${def.name}</option>`
                 ).join('');
@@ -361,24 +309,27 @@
         }
 
         /**
-         * Checks if the Open Position is valid for the current root/type selection/tuning.
+         * Checks if the Open Position is valid for the current root/type selection.
          * If it's invalid, it disables the option and forces the position to E-Shape.
+         * @returns {boolean} True if a forced position update occurred, false otherwise.
          */
         function updatePositionSelectorState() {
             const rootIndex = parseInt(rootNoteSelect.value);
             const typeKey = typeSelector.value;
             const currentPositionKey = positionSelector.value;
 
-            if (currentMode !== 'chord') return; 
+            if (currentMode !== 'chord') return false; 
 
             const openIsAvailable = hasOpenChord(rootIndex, typeKey);
             let newPositionKey = currentPositionKey;
 
             // 1. Update disabled state for Open Position option
             const options = positionSelector.options;
+            let openOptionIndex = -1;
             for (let i = 0; i < options.length; i++) {
                 if (options[i].value === 'open_position') {
                     options[i].disabled = !openIsAvailable;
+                    openOptionIndex = i;
                     break;
                 }
             }
@@ -391,7 +342,10 @@
             // Update the selector value if it changed
             if (newPositionKey !== currentPositionKey) {
                 positionSelector.value = newPositionKey;
+                return true; // Forced update occurred
             }
+            
+            return false; // No forced update
         }
 
 
@@ -400,24 +354,18 @@
             const chordDef = CHORD_DEFINITIONS[typeKey];
             const chordTypeName = chordDef.name;
             const chordIntervals = chordDef.intervals;
-            let displayStartFret = 1;
-            let barreFret = null;
-            let stringsToBarre = [];
-            let name = '';
-            let fingering = [];
 
             if (shapeKey === 'open_position') {
                 const lookupKey = `${rootIndex}_${typeKey}`;
                 const openChordData = OPEN_CHORDS[lookupKey]; 
                 if (!openChordData) {
-                    return { error: `No standard ${rootNoteName} ${chordTypeName} found in the Open Position for this tuning.` };
+                    // This should ideally be blocked by updatePositionSelectorState, 
+                    // but serves as a fallback check.
+                    return { error: `No standard ${rootNoteName} ${chordTypeName} found in the Open Position.` };
                 }
-                name = `${rootNoteName} ${chordTypeName} (Open Position)`;
-
-                fingering = openChordData.finger.map((fretValue, i) => {
-                    const fingerNum = openChordData.fingers[i];
+                const fingering = openChordData.finger.map((fretValue, i) => {
                     if (fretValue === 'X') {
-                        return { string: i, fret: 'X', finger: 'X' };
+                        return { string: i, fret: 'X', isChordTone: false };
                     }
                     const absoluteNoteIndex = getAbsoluteNoteIndex(i, fretValue);
                     const interval = getInterval(rootIndex, absoluteNoteIndex);
@@ -425,74 +373,55 @@
                     return { 
                         string: i, 
                         fret: fretValue,
-                        finger: fingerNum === 0 ? 'O' : fingerNum.toString(), // 'O' for open note
                         isChordTone: isChordTone,
-                        noteLabel: getNoteName(i, fretValue), // Label is Note Name
+                        noteName: getNoteName(i, fretValue),
                         interval: interval,
                         color: isChordTone ? getNoteColor(interval) : SVG_CONFIG.COLOR_OTHER
                     };
                 });
-            } else {
-                const shapeData = SHAPES[shapeKey];
-                const fretPattern = shapeData.voicings[typeKey].frets;
-                const fingerPattern = shapeData.voicings[typeKey].fingers;
-                const rootStringIndex = shapeData.rootStringIndex;
-                const stringRootNote = STRING_TUNING[rootStringIndex];
-                
-                // Calculate barre fret position
-                let fretDiff = (rootIndex - stringRootNote + 12) % 12;
-                barreFret = (fretDiff === 0 && rootIndex !== stringRootNote) ? 12 : fretDiff; 
-                // Handle open string root case (E-shape on E, A-shape on A)
-                if (fretDiff === 0 && shapeKey === 'e_shape' && rootIndex === STRING_TUNING[0]) barreFret = 1;
-                if (fretDiff === 0 && shapeKey === 'a_shape' && rootIndex === STRING_TUNING[1]) barreFret = 1;
-
-                if (barreFret === 0) barreFret = 12; // If calculation results in 0, use 12 (octave up)
-
-                let highestFrettedNote = 0;
-                stringsToBarre = [];
-
-                fingering = fretPattern.map((patternValue, stringIndex) => {
-                    if (patternValue === 'X') {
-                        return { string: stringIndex, fret: 'X', finger: 'X' };
-                    }
-                    
-                    const finalFret = barreFret + (patternValue - 1);
-                    if (finalFret > highestFrettedNote) { highestFrettedNote = finalFret; }
-                    
-                    if (patternValue === 1) { stringsToBarre.push(stringIndex); }
-
-                    const absoluteNoteIndex = getAbsoluteNoteIndex(stringIndex, finalFret);
-                    const interval = getInterval(rootIndex, absoluteNoteIndex);
-                    const isChordTone = chordIntervals.includes(interval);
-
-                    return { 
-                        string: stringIndex, 
-                        fret: finalFret, 
-                        finger: fingerPattern[stringIndex].toString(), 
-                        isChordTone: isChordTone,
-                        noteLabel: getNoteName(stringIndex, finalFret), // Label is Note Name
-                        interval: interval,
-                        color: isChordTone ? getNoteColor(interval) : SVG_CONFIG.COLOR_OTHER
-                    };
-                });
-                
-                // Adjust display based on highest fret
-                if (highestFrettedNote > SVG_CONFIG.TOTAL_FRETS) {
-                    displayStartFret = Math.max(1, highestFrettedNote - SVG_CONFIG.TOTAL_FRETS + 1);
-                }
-                
-                const showBarre = (stringsToBarre.length >= 2 && barreFret >= displayStartFret && fingerPattern.includes(1)); 
-
-                barreFret = showBarre ? barreFret : null;
-                name = `${rootNoteName} ${chordTypeName} (${shapeData.name} @ ${barreFret || displayStartFret}fr)`;
+                return { name: `${rootNoteName} ${chordTypeName} (Open Position)`, fingering: fingering, barreFret: null, displayStartFret: 1, stringsToBarre: [], };
             }
 
+            const shapeData = SHAPES[shapeKey];
+            const fretPattern = shapeData.voicings[typeKey];
+            const rootStringIndex = shapeData.rootStringIndex;
+            const stringRootNote = STRING_TUNING[rootStringIndex];
+            const fretDiff = (rootIndex - stringRootNote + 12) % 12;
+            const barreFret = fretDiff === 0 ? 12 : fretDiff; 
+
+            let highestFrettedNote = 0;
+            let stringsToBarre = [];
+            const fingering = fretPattern.map((patternValue, stringIndex) => {
+                if (patternValue === 'X') {
+                    return { string: stringIndex, fret: 'X', isChordTone: false };
+                }
+                const finalFret = barreFret + (patternValue - 1);
+                if (finalFret > highestFrettedNote) { highestFrettedNote = finalFret; }
+                if (patternValue === 1) { stringsToBarre.push(stringIndex); }
+                const absoluteNoteIndex = getAbsoluteNoteIndex(stringIndex, finalFret);
+                const interval = getInterval(rootIndex, absoluteNoteIndex);
+                const isChordTone = chordIntervals.includes(interval);
+
+                return { 
+                    string: stringIndex, 
+                    fret: finalFret, 
+                    isChordTone: isChordTone,
+                    noteName: getNoteName(stringIndex, finalFret),
+                    interval: interval,
+                    color: isChordTone ? getNoteColor(interval) : SVG_CONFIG.COLOR_OTHER
+                };
+            });
+            const showBarre = (stringsToBarre.length >= 2); 
+            let finalDisplayStartFret = 1;
+            if (highestFrettedNote > SVG_CONFIG.TOTAL_FRETS) {
+                finalDisplayStartFret = Math.max(1, highestFrettedNote - SVG_CONFIG.TOTAL_FRETS + 1);
+            }
             return { 
-                name: name,
+                name: `${rootNoteName} ${chordTypeName} (${shapeData.name} @ ${barreFret}fr)`,
                 fingering: fingering,
-                barreFret: barreFret,
-                displayStartFret: displayStartFret,
-                stringsToBarre: stringsToBarre,
+                barreFret: showBarre ? barreFret : null,
+                displayStartFret: finalDisplayStartFret,
+                stringsToBarre: showBarre ? stringsToBarre : [],
             };
         }
 
@@ -505,55 +434,35 @@
             const displayStartFret = parseInt(startFret);
             const displayEndFret = displayStartFret + SVG_CONFIG.TOTAL_FRETS - 1;
             const fingering = [];
-
             for (let stringIndex = 0; stringIndex < SVG_CONFIG.TOTAL_STRINGS; stringIndex++) {
-                // Check open string if start fret is 1
-                if (displayStartFret === 1) {
-                    const absNote = getAbsoluteNoteIndex(stringIndex, 0);
-                    const interval = getInterval(rootIndex, absNote);
-                    if (scaleDef.intervals.includes(interval)) {
-                         fingering.push({
-                            string: stringIndex,
-                            fret: 0,
-                            noteLabel: getIntervalName(interval), // Label is Scale Degree
-                            interval: interval,
-                            color: getNoteColor(interval),
-                            finger: 'O',
-                        });
-                    }
-                }
-
-                // Check fretted notes
-                for (let fret = displayStartFret; fret <= displayEndFret; fret++) {
+                const startFretLoop = displayStartFret === 1 ? 0 : displayStartFret;
+                const endFretLoop = displayEndFret;
+                for (let fret = startFretLoop; fret <= endFretLoop; fret++) {
+                    if (fret === 0 && displayStartFret > 1) continue;
                     const absoluteNoteIndex = getAbsoluteNoteIndex(stringIndex, fret);
                     const interval = getInterval(rootIndex, absoluteNoteIndex);
-
                     if (scaleDef.intervals.includes(interval)) {
-                        // Simple 4-fret-per-string fingering hint (1st finger starts at startFret)
-                        let fingerNum = (fret - displayStartFret) + 1;
-                        if (fret === 0) fingerNum = 'O';
-                        
-                        // Prevent duplicates (though unique fret/string pairs are generated by loops)
-                        if (!fingering.some(f => f.string === stringIndex && f.fret === fret)) {
-                            fingering.push({
-                                string: stringIndex,
-                                fret: fret,
-                                noteLabel: getIntervalName(interval), // Label is Scale Degree
-                                interval: interval,
-                                color: getNoteColor(interval),
-                                finger: fingerNum.toString(),
-                            });
+                        const fretToDisplay = fret;
+                        if (fretToDisplay === 0 || (fretToDisplay >= displayStartFret && fretToDisplay <= displayEndFret)) {
+                            if (!fingering.some(f => f.string === stringIndex && f.fret === fretToDisplay)) {
+                                fingering.push({
+                                    string: stringIndex,
+                                    fret: fretToDisplay,
+                                    noteName: NOTE_INFO[absoluteNoteIndex].name,
+                                    interval: interval,
+                                    color: getNoteColor(interval),
+                                });
+                            }
                         }
                     }
                 }
             }
-
             let name = `${rootNoteName} ${scaleDef.name}`;
-            const positionDef = SCALE_POSITIONS.find(p => p.startFret == displayStartFret);
-            if (positionDef) {
-                name += ` (${positionDef.name})`;
+            if (displayStartFret > 1) {
+                name += ` (Fret ${displayStartFret} to ${displayEndFret})`;
+            } else {
+                name += ` (Open Position Map)`;
             }
-
             return { 
                 name: name,
                 fingering: fingering,
@@ -572,7 +481,7 @@
             const TOTAL_STRINGS = SVG_CONFIG.TOTAL_STRINGS;
             const TOTAL_FRETS = SVG_CONFIG.TOTAL_FRETS;
             const FINGER_R = SVG_CONFIG.FINGER_RADIUS;
-            const LABEL_AREA_W = SVG_CONFIG.LABEL_AREA_W;
+            const LABEL_AREA_W = 36;
             const STRING_W = (TOTAL_STRINGS - 1) * STRING_SPACING;
             const START_Y = SVG_CONFIG.CHART_START_Y;
             const showNut = (displayStartFret === 1);
@@ -583,34 +492,21 @@
             let gContent = '';
             const svgHeight = START_Y + TOTAL_FRETS * FRET_H + 26;
             svg.setAttribute('height', svgHeight);
-
-            // --- Draw Nut or Start Fret Label ---
             if (showNut) {
                 gContent += `<rect x="${START_X - 2}" y="${START_Y - SVG_CONFIG.NUT_THICKNESS / 2}" width="${STRING_W + 4}" height="${SVG_CONFIG.NUT_THICKNESS}" fill="#374151"/>`;
             } else {
                 gContent += `<line x1="${START_X}" y1="${START_Y}" x2="${START_X + STRING_W}" y2="${START_Y}" stroke="#374151" stroke-width="2" />`;
-                // Fret Number Label for shifted positions (e.g., 5fr)
-                gContent += `<text x="${START_X - 12}" y="${START_Y + FRET_H / 2 + 4}" text-anchor="end" font-size="14" font-weight="bold" fill="#374151">${displayStartFret}</text>`;
+                gContent += `<text x="${START_X - 18}" y="${START_Y + 7}" text-anchor="end" font-size="12" fill="#374151">${displayStartFret}fr</text>`;
             }
-            
-            // --- Draw Frets and Fret Numbers (1 to 5) ---
             for (let i = 1; i <= TOTAL_FRETS; i++) {
                 const y = START_Y + i * FRET_H;
                 gContent += `<line x1="${START_X}" y1="${y}" x2="${START_X + STRING_W}" y2="${y}" stroke="#374151" stroke-width="2" />`;
-                
-                // Fret Number Labels (on the side)
-                const absoluteFretNum = displayStartFret + i;
-                gContent += `<text x="${START_X - 12}" y="${y - FRET_H/2 + 4}" text-anchor="end" font-size="14" fill="#6b7280">${absoluteFretNum - 1}</text>`;
             }
-
-            // --- Draw Strings ---
             for (let i = 0; i < TOTAL_STRINGS; i++) {
                 const x = START_X + i * STRING_SPACING;
                 const y2 = START_Y + TOTAL_FRETS * FRET_H;
                 gContent += `<line x1="${x}" y1="${START_Y}" x2="${x}" y2="${y2}" stroke="#374151" stroke-width="1" />`;
             }
-            
-            // --- Draw Barre ---
             if (currentMode === 'chord' && barreFret !== null && stringsToBarre.length > 0) {
                 const barreFretOffset = barreFret - displayStartFret;
                 if (barreFretOffset >= 0 && barreFretOffset < TOTAL_FRETS) {
@@ -618,67 +514,45 @@
                     const firstBarreStringX = START_X + stringsToBarre[0] * STRING_SPACING;
                     const lastBarreStringX = START_X + stringsToBarre[stringsToBarre.length - 1] * STRING_SPACING;
                     gContent += `<line x1="${firstBarreStringX}" y1="${barreY}" x2="${lastBarreStringX}" y2="${barreY}" stroke="#3b82f6" stroke-width="8" stroke-linecap="round" opacity="0.6"/>`;
-                    
-                    // Barre Fret Number Label
                     gContent += `<text x="${START_X - 22}" y="${barreY + 6}" text-anchor="end" font-size="11" font-weight="bold" fill="#3b82f6">${barreFret}fr</text>`;
                 }
             }
-
-            // --- Draw Fingers ---
-            fingering.forEach(f => {
+            fingering.sort((a, b) => a.fret - b.fret).forEach(f => {
                 const stringX = START_X + f.string * STRING_SPACING;
-                
                 if (f.fret === 'X') {
-                    // Muted String
                     gContent += `<text x="${stringX}" y="${START_Y - 10}" text-anchor="middle" font-size="16" font-weight="bold" fill="#ef4444">X</text>`;
                 } else if (f.fret === 0) {
-                    // Open String
                     const fill = f.color || 'transparent';
                     const stroke = fill === 'transparent' ? '#374151' : 'none';
-                    // Use a slightly thicker circle for open notes
-                    gContent += `<circle cx="${stringX}" cy="${START_Y - 10}" r="8" fill="${fill}" stroke="${stroke}" stroke-width="2"/>`; 
-                    const label = f.noteLabel;
+                    gContent += `<circle cx="${stringX}" cy="${START_Y - 10}" r="6" fill="${fill}" stroke="${stroke}" stroke-width="2"/>`;
+                    const label = f.noteName;
                     const labelColor = fill !== 'transparent' ? 'white' : '#374151';
                     if (label) {
-                        const fontSize = (label.length > 1) ? 9 : 11;
+                        const fontSize = (label.length > 1) ? 8 : 10;
                          gContent += `<text x="${stringX}" y="${START_Y - 6}" text-anchor="middle" font-weight="bold" font-size="${fontSize}" fill="${labelColor}">${label}</text>`;
                     }
                 } else {
-                    // Fretted Note
                     const fretNumber = f.fret;
                     const fretOffset = fretNumber - displayStartFret;
-                    
                     if (fretOffset >= 0 && fretOffset < TOTAL_FRETS) {
                         const fingerY = START_Y + fretOffset * FRET_H + FRET_H / 2;
                         const fill = f.color || SVG_CONFIG.COLOR_OTHER;
-                        const labelText = f.noteLabel;
-                        const fingerNum = f.finger;
-                        
+                        const noteText = f.noteName;
                         gContent += `<circle cx="${stringX}" cy="${fingerY}" r="${FINGER_R}" fill="${fill}" class="key-shadow"/>`;
-                        
-                        // Display Note/Degree Label
-                        const fontSizeLabel = (labelText && labelText.length > 1) ? 9 : 11;
-                        gContent += `<text x="${stringX}" y="${fingerY + 4}" text-anchor="middle" font-weight="bold" font-size="${fontSizeLabel}" fill="white">${labelText}</text>`;
-                        
-                        // Display Finger Number (small, above the dot)
-                        if (currentMode === 'chord' && fingerNum !== '1' && fingerNum !== 'X' && fingerNum !== 'O') {
-                            gContent += `<text x="${stringX + FINGER_R}" y="${fingerY - FINGER_R + 6}" text-anchor="middle" font-weight="bold" font-size="10" fill="#374151">${fingerNum}</text>`;
-                        }
+                        const fontSize = (noteText && noteText.length > 1) ? 9 : 11;
+                        gContent += `<text x="${stringX}" y="${fingerY + 4}" text-anchor="middle" font-weight="bold" font-size="${fontSize}" fill="white">${noteText}</text>`;
                     }
                 }
             });
-            
-            // --- Draw Fret Markers (Dots) ---
+            // Dot markers
             const dotFrets = [3, 5, 7, 9, 12];
             const dotX = START_X + STRING_W / 2;
             const dotR = 7; 
             dotFrets.forEach(absoluteFret => {
                 const fretOffset = absoluteFret - displayStartFret;
-                
                 if (fretOffset > 0 && fretOffset <= TOTAL_FRETS) {
                     const markerY = START_Y + fretOffset * FRET_H; 
-                    
-                    if (absoluteFret % 12 === 0) { // Double dot for octave
+                    if (absoluteFret % 12 === 0) { 
                         gContent += `<circle cx="${dotX - 18}" cy="${markerY}" r="${dotR}" fill="#cccccc"/>`; 
                         gContent += `<circle cx="${dotX + 18}" cy="${markerY}" r="${dotR}" fill="#cccccc"/>`; 
                     } else if ([3, 5, 7, 9].includes(absoluteFret)) { 
@@ -686,7 +560,6 @@
                     }
                 }
             });
-
             svg.innerHTML = `<g transform="translate(${TRANSLATE_X}, 0)">${gContent}</g>`;
         }
 
@@ -697,8 +570,10 @@
 
             fretboardSvg.innerHTML = ''; 
             
+            // Check and update position selector state before calculating visualization
             if (currentMode === 'chord') {
                 updatePositionSelectorState(); 
+                // Re-read the position value in case it was forced to E-Shape
                 positionKey = positionSelector.value; 
             }
 
@@ -710,18 +585,14 @@
             }
 
             if (data && data.error) {
-                // Update the info area with the error
-                const infoArea = document.getElementById('infoArea').querySelector('h3');
-                infoArea.textContent = 'Error: ' + data.error;
-                infoArea.classList.add('text-red-600');
+                // Optionally display the error in the info area
+                document.getElementById('infoArea').querySelector('h3').textContent = data.error;
                 return;
             }
             if (data) {
                 drawFretboard(data);
-                // Reset info area if visualization is successful
-                const infoArea = document.getElementById('infoArea').querySelector('h3');
-                infoArea.textContent = 'Note Function Legend';
-                infoArea.classList.remove('text-red-600');
+                // Reset info area if visualization is successful (optional)
+                document.getElementById('infoArea').querySelector('h3').textContent = 'Note Function Legend';
             }
         }
 
@@ -731,7 +602,6 @@
             rootNoteSelect = document.getElementById('rootNote');
             typeSelector = document.getElementById('typeSelector');
             positionSelector = document.getElementById('positionSelector');
-            tuningSelector = document.getElementById('tuningSelector');
             typeLabel = document.getElementById('typeLabel');
             positionLabel = document.getElementById('positionLabel');
             fretboardSvg = document.getElementById('fretboardSvg');
@@ -743,7 +613,6 @@
             rootNoteSelect.addEventListener('change', updateVisualization);
             typeSelector.addEventListener('change', updateVisualization);
             positionSelector.addEventListener('change', updateVisualization); 
-            tuningSelector.addEventListener('change', handleTuningChange); // New listener for tuning
             
             window.addEventListener('resize', () => {
                 SVG_CONFIG.FRET_HEIGHT = window.innerWidth <= 480 ? 60 : 80;
@@ -762,10 +631,6 @@
             // Set initial mode and styles
             modeChordButton.classList.add(...ACTIVE_COLOR_CLASSES);
             modeScaleButton.classList.add(...INACTIVE_COLOR_CLASSES);
-            
-            // Set initial tuning
-            STRING_TUNING = TUNINGS[tuningSelector.value].notes;
-
             updateMode('chord');
         }
 
